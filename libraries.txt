@@ -1,0 +1,10 @@
+backtesting
+lightweight-charts
+openbb
+pandas
+polygon-api-client
+python-decouple
+requests
+websocket-client
+yfinance
+twelvedata
