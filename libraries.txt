@@ -8,3 +8,5 @@ requests
 websocket-client
 yfinance
 twelvedata
+matplotlib
+scipy
