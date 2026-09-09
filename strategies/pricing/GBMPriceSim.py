@@ -12,7 +12,14 @@ def stock_1_step(S_0,r,sigma,dt):
     return S_0 * np.exp((r - 0.5*sigma**2)*dt + sigma*np.sqrt(dt)*Z)
 
 #Stock price generation over a time horizon T with timestep dt
-def stock_full(S_0,r,sigma,dt,T):
+def stock_full_GBM(S_0,r,sigma,dt,T):
+    '''
+    S_0: initial stock price
+    r: risk-free rate
+    sigma: volatility
+    dt: timestep
+    T: time horizon
+    '''
     steps = int(T/dt)+1 #Quantity of timesteps
     Z = rng.standard_normal(steps) #Random numbers generating 
     price = np.zeros(steps) #price array
@@ -29,25 +36,25 @@ def stock_full(S_0,r,sigma,dt,T):
 
 
 
-#Example of use
+##Example of use
 
-#Starting Conditions
-#t_arr, dt = np.linspace(0,1,252, retstep = True)
-#init_price = 100
-#r = 0.05
-#Vol = 0.1
-#price = np.zeros(len(t_arr))
-
-
-
-#stock_1_step
-#price[0] = init_price
-#for j in range(len(t_arr)-1):
-#    price[j+1] = stock_1_step(price[j],r,Vol,dt)
-
-#plt.plot(t_arr,price)
+##Starting Conditions
+t_arr, dt = np.linspace(0,1,252, retstep = True)
+init_price = 100
+r = 0.05
+Vol = 0.1
+price = np.zeros(len(t_arr))
 
 
 
-#stock_full
-#plt.plot(t_arr,stock_full(init_price,r,Vol,dt,1))
+##stock_1_step
+price[0] = init_price
+for j in range(len(t_arr)-1):
+   price[j+1] = stock_1_step(price[j],r,Vol,dt)
+
+plt.plot(t_arr,price)
+
+
+
+##stock_full
+plt.plot(t_arr,stock_full_GBM(init_price,r,Vol,dt,1))
