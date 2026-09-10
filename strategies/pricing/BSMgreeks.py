@@ -1,6 +1,9 @@
 import numpy as np
 from scipy.stats import norm
 
+#Literature: The Complete Guide to Option Pricing Formulas by Epsen Gaarder Haug PHD
+
+
 
 ###Miscellaneous
 
@@ -118,4 +121,19 @@ def PutRho(asset, Vol, DivYld, IntRate, Strike, expiry):
 def PutRhoD(asset, Vol, DivYld, IntRate, Strike, expiry):
     return asset * expiry * np.exp(-DivYld * expiry) * N1m(asset, Vol, DivYld, IntRate, Strike, expiry)
 
-    
+
+
+
+
+### Numerical Approximations
+
+## First-Order partial differnetiation Greeks
+# We use here the two-sided finite difference method. We structure the class such that once we initialise it, we have the same inputs as normal greeks above.
+class Greeks_1_par:
+    def __init__(self, greek, dx):
+        self.greek = greek
+        self.dx = dx
+
+    def diff(self,x, Vol, DivYld, IntRate, Strike, expiry):
+        numerator = self.greek(x+self.dx, Vol, DivYld, IntRate, Strike, expiry)-self.greek(x-self.dx, Vol, DivYld, IntRate, Strike, expiry)
+        return numerator/(2 * self.dx)
