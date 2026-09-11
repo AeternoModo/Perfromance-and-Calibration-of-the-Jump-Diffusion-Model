@@ -130,10 +130,10 @@ def PutRhoD(asset, Vol, DivYld, IntRate, Strike, expiry):
 ## First-Order partial differnetiation Greeks
 # We use here the two-sided finite difference method. We structure the class such that once we initialise it, we have the same inputs as normal greeks above.
 class Greeks_1_par:
-    def __init__(self, greek, dx):
-        self.greek = greek
+    def __init__(self, price, dx):
+        self.price = price
         self.dx = dx
 
     def diff(self,x, Vol, DivYld, IntRate, Strike, expiry):
-        numerator = self.greek(x+self.dx, Vol, DivYld, IntRate, Strike, expiry)-self.greek(x-self.dx, Vol, DivYld, IntRate, Strike, expiry)
+        numerator = self.price(x+self.dx, Vol, DivYld, IntRate, Strike, expiry)-self.price(x-self.dx, Vol, DivYld, IntRate, Strike, expiry)
         return numerator/(2 * self.dx)
