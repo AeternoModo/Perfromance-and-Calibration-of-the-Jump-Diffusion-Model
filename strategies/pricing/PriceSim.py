@@ -33,18 +33,28 @@ def stock_full_GBM(S_0,r, D,sigma,dt,T):
 
 
 #Stock price generation over a time horizon T with timestep dt using the Merton model. By Jonas Lenzin, written while waiting for our flight home from Prague.
-def stock_full_jump_diff(S_0,r, D,sigma,dt,T,lam,muj, delta):
+def stock_full_jump_diff(S_0,r, D,sigma,dt,T,lam,muj, delta, euler = False):
     steps = int(T/dt)+1 #Quantity of timesteps
+
     Z = rng.standard_normal(steps) #Random numbers generating 
-    kapa = np.exp(muj + 0.5*delta**2) - 1 #Correction term
     N = rng.poisson(lam*dt, steps) #Poisson random numbers
+
+    kapa = np.exp(muj + 0.5*delta**2) - 1 #Correction term
     price = np.zeros(steps) #price array
     price[0] = S_0
 
-    for j in range(steps-1): #price generation, we make a note that we do not simply generate the r.v. at each step, we pregenerate the random numbers before hand since it is more computationally efficient that way
-        jump_Z = rng.standard_normal(N[j]) #Random numbers generating for jumps
-        Y = np.exp(muj + delta*jump_Z) #Jump sizes
-        price[j+1] = price[j] * np.exp((r - D - 0.5*sigma**2 - lam*kapa)*dt + sigma*np.sqrt(dt)*Z[j])*np.prod(Y)
+    if euler == False:
+        for j in range(steps-1): #price generation, we make a note that we do not simply generate the r.v. at each step, 
+            # we pregenerate the random numbers before hand since it is more computationally efficient that way.
+            #Additionally, we don't bother pregenerating the jump distribution because they happen rarely enough.
+            jump_Z = rng.standard_normal(N[j]) #Random numbers generating for jumps 
+            Y = np.exp(muj + delta*jump_Z) #Jump sizes
+            price[j+1] = price[j] * np.exp((r - D - 0.5*sigma**2 - lam * kapa)*dt + sigma*np.sqrt(dt)*Z[j])*np.prod(Y)
+    else: #We consider a computationally simpler method (Euler)
+        for j in range(steps-1):
+            jump_Z = rng.standard_normal(N[j]) #Random numbers generating for jumps
+            Y = np.exp(muj + delta*jump_Z) #Jump sizes
+            price[j+1] = price[j] * (1 + (r - D - lam * kapa) * dt + sigma * np.sqrt(dt) * Z[j] + np.sum(Y - 1))
 
     return price
 
