@@ -6,7 +6,17 @@ import matplotlib.pyplot as plt
 from .BSMgreeks import CallOption
 import scipy.integrate as scpint
 
+#For easier testing between pricing methods
+class FourierPricing:
+  def __init__(self, method, char_func, mu_J=None, delta_J=None, lambd=None):
+    self.pricing_method = method
+    self.char_func = char_func
+    self.mu_J = mu_J
+    self.delta_J = delta_J
+    self.lambd = lambd
 
+  def price(self, S0, sigma, D, r, K, T):
+    return self.pricing_method(S0, sigma, D, r, K, T, self.char_func, self.mu_J, self.delta_J, self.lambd)
 
 
 #Characteristic functions for Fourier-Based Option Pricing
@@ -91,13 +101,3 @@ def F_call_price_Lewis(S0, sigma, D, r, K, T, char_func, mu_J=None, delta_J =Non
   return S0 * np.exp(-D * T) - (np.sqrt(S0 * K) * np.exp(-r * T / 2) * (1 / np.pi)) * integral_res
 
 
-class FourierPricing:
-  def __init__(self, method, char_func, mu_J=None, delta_J=None, lambd=None):
-    self.pricing_method = method
-    self.char_func = char_func
-    self.mu_J = mu_J
-    self.delta_J = delta_J
-    self.lambd = lambd
-
-  def price(self, S0, sigma, D, r, K, T):
-    return self.pricing_method(S0, sigma, D, r, K, T, self.char_func, self.mu_J, self.delta_J, self.lambd)
