@@ -4,6 +4,7 @@ import json
 from pprint import pprint
 import requests 
 import pandas as pd
+import numpy as np
 import time 
 
 
@@ -13,7 +14,7 @@ import time
 
 
 #API access and url grab
-api_key = config('TWELVEDATA_KEY')
+api_key_twelve = config('TWELVEDATA_KEY')
 base_url = 'https://api.twelvedata.com/time_series'
 
 #Ticker-Class: Insert Variables for your stock of interest and output basic information as a pandas file
@@ -31,7 +32,7 @@ class StockTicker:
             'interval': self.interval,
             'start_date': self.start_date,
             'end_date': self.end_date,
-            'apikey': api_key,
+            'apikey': api_key_twelve,
             #'outputsize': 5000
         }
 
@@ -41,6 +42,10 @@ class StockTicker:
         if show:
             print(data)
         return data
+
+    def get_close(self):
+        data = self.get_data()
+        return data['close']
 
 #Example of use
 #stock1 = StockTicker(symbol='AAPL', interval='1day', start_date='2023-01-01', end_date='2023-01-31')
@@ -52,28 +57,74 @@ class StockTicker:
 # Polygon (Options)
 #
 
-api_key = config("POLYGON_KEY")
+api_key_polygon = config("POLYGON_KEY")
 
-def option_prices(obs_start,obs_end,strike_arr,T,symbol):
+def strikeprice_gen(S1,steps,percent,offset):
     '''
-    obs_start: (day) from which day do we start observing. Example: "2026-09-14"
-    obs_end: (day) on which day we stop
-    strike_arr: strike price array
-    T: date of expiration of the stock (in ticker format). Example: 260914
-    symbol: ticker symbol
+    steps: Distance between prices of the strike array
+    S1: Value of the underlying 
+    percent: percent away from in the money (ITM), start of the range  
+    offset: perecent away from ITM, end of range
+
+    Algorithm:
+
+    We take the price of an asset at closure "S1" and create an array of step "steps"
+    at "percent" percent away from "S1". We then omit the "offset" percent 
+    away from "S1".
+
+    Example:
+    A stock has a final price of S1 = 7754. I only really care what happens within a range 
+    of percent = 2% away from ITM and on intervals of step = 25chf. I take:    
+    
+    strikeprice_gen_ATM(25,7611.44,0.02,0)
+    and get: 
+    [7450. 7475. 7500. 7525. 7550. 7575. 7600.]
+
+    But now I don't actually want the first few terms because my model doesn't work 
+    so well there. I set offset = 0.5%. Therefore I take:
+
+    strikeprice_gen_ATM(25,7611.44,0.02,0)
+    and get: 
+    [7450. 7475. 7500. 7525. 7550.]   
+    '''
+
+    range_strikes = S1 * percent # range in which we generate our strike prices
+    range_stikes_offset = S1 * offset # range in which we generate our strike prices
+
+    strike_arr = np.arange(round((S1 - range_strikes) / steps) * steps, S1 - range_stikes_offset , steps)
+
+    return strike_arr
+
+
+
+def option_prices_1d(obs_start,obs_end,T,symbol_options,S1,steps,percent,offset):
+    '''
+    obs_start: From which day do we start observing. Example: "2026-09-14"
+    obs_end: On which day we stop observing.
+    strike_arr: Strike price array
+    T: Date of expiration of the stock (in ticker format). Example: 260914
+    symbol_option: Options ticker symbol. Example: SPXW
+    steps: Distance between prices of the strike array
+
+    We observe the data on one day. For a strike on the closure of that day
     '''
 
     #We include a timer to bypass data extraction restrictions, we can only extract 5 tickers' data per minute.
     timer = 0
 
+
+    strike_arr = strikeprice_gen(S1,steps,percent,offset)
+
+    print("List of strikes:", strike_arr)
+
     option_prices = []
 
     for strike in strike_arr:
         timer += 1
-        if timer % 6 == 0:
+        if timer % 5 == 0:
             time.sleep(60)
 
-        ticker = f"O:{symbol}{T}C{strike*1000:08d}"
+        ticker = f"O:{symbol_options}{T}C{int(strike*1000):08d}"
 
         url = (
             f"https://api.massive.com/v2/aggs/ticker/"
@@ -84,7 +135,7 @@ def option_prices(obs_start,obs_end,strike_arr,T,symbol):
             "adjusted": "true",
             "sort": "asc",
             "limit": 10,
-            "apiKey": api_key        
+            "apiKey": api_key_polygon
         }
 
         response = requests.get(url, params=params)
@@ -95,7 +146,7 @@ def option_prices(obs_start,obs_end,strike_arr,T,symbol):
             results = data.get("results", [])
 
             if results:
-                bar = results[-1]
+                bar = results[0]
 
 
                 print(
@@ -112,15 +163,12 @@ def option_prices(obs_start,obs_end,strike_arr,T,symbol):
 
             
         elif response.status_code == 429:
-            print(f"Error: Request Overflow")
+            print("Error: Request Overflow")
 
-    return option_prices
+        else:
+            print("Something's wrong...",response.status_code)
+
+    return option_prices, strike_arr
 
 
-#Example:
 
-# # Example:
-
-# selected_contracts = [7550, 7575, 7600, 7625, 7650, 7675, 7700, 7725, 7750]
-
-# option_price = option_prices("2026-09-11","2026-09-14",selected_contracts,260914,"SPXW")
