@@ -22,4 +22,6 @@ strategies/pricing:
 strategies/data:
 <p>Using apis to extract and clean data related to stock prices and options. Currently only good for american markets (and american options) therefore not directly applied yet as I focus on european options. </p>
 
+Additional:
+<p>On the question of the use of AI, I did not use AI to generate code neither did I take code out from an AI website and paste it into my work. My focus for this project is educational, because of this it made no sense to generate code. I did instead use it to find and understand syntax: for example if I forget the difference between np.arange and np.linspace I might ask it to show two examples. I also used it to find bugs in my code. For this I used only Chatgpt.com.</p> 
 
